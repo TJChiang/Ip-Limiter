@@ -2,15 +2,13 @@ package config
 
 import (
 	"strconv"
-	"time"
 )
 
 type RedisConfig struct {
-	Addr            string
-	Password        string
-	DB              int
-	MaxRetries      int
-	CacheExpiration time.Duration
+	Addr       string
+	Password   string
+	DB         int
+	MaxRetries int
 }
 
 func NewRedisConfig() (*RedisConfig, error) {
@@ -24,16 +22,10 @@ func NewRedisConfig() (*RedisConfig, error) {
 		return nil, err
 	}
 
-	exp, err := strconv.ParseInt(GetEnvValue("REDIS_TTL", "3600"), 10, 64)
-	if err != nil {
-		return nil, err
-	}
-
 	return &RedisConfig{
-		Addr:            GetEnvValue("REDIS_ADDR", "localhost:6379"),
-		Password:        GetEnvValue("REDIS_PASSWORD", ""),
-		DB:              db,
-		MaxRetries:      retires,
-		CacheExpiration: time.Duration(exp) * time.Second,
+		Addr:       GetEnvValue("REDIS_ADDR", "localhost:6379"),
+		Password:   GetEnvValue("REDIS_PASSWORD", ""),
+		DB:         db,
+		MaxRetries: retires,
 	}, nil
 }
