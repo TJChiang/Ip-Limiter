@@ -3,7 +3,9 @@ package config
 import "os"
 
 type AppConfig struct {
-	Name string
+	Name    string
+	Port    string
+	GinMode string
 }
 
 func GetEnvValue(key string, initial string) string {
@@ -15,9 +17,10 @@ func GetEnvValue(key string, initial string) string {
 }
 
 func NewAppConfig() (*AppConfig, error) {
-	appName := GetEnvValue("APP_NAME", "IpLimiter")
 
 	return &AppConfig{
-		Name: appName,
+		Name:    GetEnvValue("APP_NAME", "IpLimiter"),
+		Port:    GetEnvValue("APP_PORT", "8088"),
+		GinMode: GetEnvValue("GIN_MODE", "debug"),
 	}, nil
 }
