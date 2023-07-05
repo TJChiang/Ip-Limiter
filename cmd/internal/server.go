@@ -2,6 +2,7 @@ package internal
 
 import (
 	"IpLimiter/config"
+	"IpLimiter/pkg"
 	"fmt"
 	"github.com/gin-gonic/gin"
 )
@@ -11,19 +12,13 @@ type Server struct {
 	Engine *gin.Engine
 }
 
-func NewEngine(config *config.AppConfig) *gin.Engine {
+func newEngine(config *config.AppConfig, rateLimiter *RateLimiterMiddleware) *gin.Engine {
 	gin.SetMode(config.GinMode)
 
-	engine := gin.Default()
+	engine := gin.New()
 	engine.Use(gin.Recovery())
+	engine.Use(rateLimiter.handle())
 	return engine
-}
-
-func NewServer(config *config.AppConfig, engine *gin.Engine) *Server {
-	return &Server{
-		config,
-		engine,
-	}
 }
 
 func InitializeServer() (*Server, error) {
@@ -32,16 +27,22 @@ func InitializeServer() (*Server, error) {
 		return nil, err
 	}
 
-	engine := NewEngine(appConfig)
-	server := NewServer(appConfig, engine)
+	limiter, err := pkg.NewLimiter("")
+	if err != nil {
+		return nil, err
+	}
 
-	return server, nil
+	rateLimiter := NewRateLimiterMiddleware(limiter)
+	engine := newEngine(appConfig, rateLimiter)
+
+	return &Server{
+		appConfig,
+		engine,
+	}, nil
 }
 
 func (s *Server) registerRoutes() {
-	s.Engine.GET("/", func(context *gin.Context) {
-		fmt.Println("Hello")
-	})
+	s.Engine.GET("/", sayHi)
 }
 
 func (s *Server) Run() {

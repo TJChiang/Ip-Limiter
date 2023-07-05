@@ -3,6 +3,7 @@ package pkg
 import (
 	"IpLimiter/config"
 	"context"
+	"fmt"
 	"github.com/redis/go-redis/v9"
 	"strconv"
 	"strings"
@@ -10,10 +11,10 @@ import (
 )
 
 type Limiter struct {
-	rdb    *redis.Client
-	ctx    context.Context
-	prefix string
-	config *config.LimiterConfig
+	rdb     *redis.Client
+	ctx     context.Context
+	prefix  string
+	Options *config.LimiterConfig
 }
 
 func NewLimiter(prefix string) (*Limiter, error) {
@@ -56,18 +57,21 @@ func (l *Limiter) Limit(ipaddr string) (int64, time.Duration, error) {
 	}
 
 	value, err := l.rdb.Get(l.ctx, key).Result()
+	if err == redis.Nil {
+		return 0, 0, nil
+	}
 	if err != nil {
-		return 0, 0, err
+		panic(err)
 	}
 
 	ttl, err := l.rdb.TTL(l.ctx, key).Result()
 	if err != nil {
-		return 0, 0, err
+		panic(err)
 	}
 
 	val, err := strconv.ParseInt(value, 10, 64)
 	if err != nil {
-		return 0, 0, err
+		panic(err)
 	}
 
 	return val, ttl, nil
@@ -78,7 +82,7 @@ func (l *Limiter) Hit(ipaddr string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	if _, err := l.rdb.SetNX(l.ctx, key, 0, l.config.Ttl).Result(); err != nil {
+	if _, err := l.rdb.SetNX(l.ctx, key, 0, l.Options.Ttl).Result(); err != nil {
 		return 0, err
 	}
 
@@ -86,6 +90,8 @@ func (l *Limiter) Hit(ipaddr string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
+
+	fmt.Printf("%s hits. Count: %d\n", ipaddr, value)
 
 	return value, nil
 }

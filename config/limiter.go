@@ -6,8 +6,8 @@ import (
 )
 
 type LimiterConfig struct {
-	Ttl     time.Duration
-	Attempt int64
+	Ttl        time.Duration
+	MaxAttempt int64
 }
 
 func NewLimiterConfig() (*LimiterConfig, error) {
@@ -16,13 +16,13 @@ func NewLimiterConfig() (*LimiterConfig, error) {
 		panic(err)
 	}
 
-	attempt, err := strconv.ParseInt(GetEnvValue("LIMITER_ATTEMPT", "1000"), 10, 64)
+	maxAttempt, err := strconv.ParseInt(GetEnvValue("LIMITER_MAX_ATTEMPT", "1000"), 10, 64)
 	if err != nil {
 		panic(err)
 	}
 
 	return &LimiterConfig{
-		Ttl:     time.Duration(ttl) * time.Second,
-		Attempt: attempt,
+		Ttl:        time.Duration(ttl) * time.Second,
+		MaxAttempt: maxAttempt,
 	}, nil
 }
