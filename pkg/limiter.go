@@ -6,13 +6,12 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"strconv"
-	"strings"
 	"time"
 )
 
 type Limiter struct {
-	rdb     *redis.Client
-	ctx     context.Context
+	Rdb     *redis.Client
+	Ctx     context.Context
 	prefix  string
 	Options *config.LimiterConfig
 }
@@ -51,12 +50,9 @@ func NewLimiter(prefix string) (*Limiter, error) {
 }
 
 func (l *Limiter) Limit(ipaddr string) (int64, time.Duration, error) {
-	key, err := l.getKey(ipaddr)
-	if err != nil {
-		return 0, 0, err
-	}
+	key := l.getKey(ipaddr)
 
-	value, err := l.rdb.Get(l.ctx, key).Result()
+	value, err := l.Rdb.Get(l.Ctx, key).Result()
 	if err == redis.Nil {
 		return 0, 0, nil
 	}
@@ -64,7 +60,7 @@ func (l *Limiter) Limit(ipaddr string) (int64, time.Duration, error) {
 		panic(err)
 	}
 
-	ttl, err := l.rdb.TTL(l.ctx, key).Result()
+	ttl, err := l.Rdb.TTL(l.Ctx, key).Result()
 	if err != nil {
 		panic(err)
 	}
@@ -78,18 +74,14 @@ func (l *Limiter) Limit(ipaddr string) (int64, time.Duration, error) {
 }
 
 func (l *Limiter) Hit(ipaddr string) (int64, error) {
-	key, err := l.getKey(ipaddr)
-	if err != nil {
-		return 0, err
-	}
+	key := l.getKey(ipaddr)
 
-	pipe := l.rdb.Pipeline()
+	pipe := l.Rdb.Pipeline()
 	pipeCmds := []interface{}{
-		pipe.SetNX(l.ctx, key, 0, l.Options.Ttl),
-		pipe.Incr(l.ctx, key),
+		pipe.SetNX(l.Ctx, key, 0, l.Options.Ttl),
+		pipe.Incr(l.Ctx, key),
 	}
-	_, err = pipe.Exec(l.ctx)
-	if err != nil {
+	if _, err := pipe.Exec(l.Ctx); err != nil {
 		return 0, err
 	}
 
@@ -106,22 +98,14 @@ func (l *Limiter) Hit(ipaddr string) (int64, error) {
 }
 
 func (l *Limiter) Clean(ipaddr string) error {
-	key, _ := l.getKey(ipaddr)
-	if _, err := l.rdb.Del(l.ctx, key).Result(); err != nil {
+	key := l.getKey(ipaddr)
+	if _, err := l.Rdb.Del(l.Ctx, key).Result(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (l *Limiter) getKey(key string) (string, error) {
-	var buffer strings.Builder
-	if _, err := buffer.WriteString(l.prefix); err != nil {
-		return "", err
-	}
-	if _, err := buffer.WriteString(key); err != nil {
-		return "", err
-	}
-
-	return buffer.String(), nil
+func (l *Limiter) getKey(key string) string {
+	return l.prefix + ":" + key
 }
