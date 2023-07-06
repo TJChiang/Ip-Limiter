@@ -3,8 +3,8 @@ package pkg
 import (
 	"IpLimiter/config"
 	"context"
-	"fmt"
 	"github.com/redis/go-redis/v9"
+	"github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
 	"time"
@@ -82,16 +82,25 @@ func (l *Limiter) Hit(ipaddr string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	if _, err := l.rdb.SetNX(l.ctx, key, 0, l.Options.Ttl).Result(); err != nil {
-		return 0, err
-	}
 
-	value, err := l.rdb.Incr(l.ctx, key).Result()
+	pipe := l.rdb.Pipeline()
+	pipeCmds := []interface{}{
+		pipe.SetNX(l.ctx, key, 0, l.Options.Ttl),
+		pipe.Incr(l.ctx, key),
+	}
+	_, err = pipe.Exec(l.ctx)
 	if err != nil {
 		return 0, err
 	}
 
-	fmt.Printf("%s hits. Count: %d\n", ipaddr, value)
+	incr := pipeCmds[1].(*redis.IntCmd)
+
+	value, err := incr.Result()
+	if err != nil {
+		return 0, err
+	}
+
+	logrus.Infof("%s hits. Count: %d", ipaddr, value)
 
 	return value, nil
 }

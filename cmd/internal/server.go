@@ -3,8 +3,8 @@ package internal
 import (
 	"IpLimiter/config"
 	"IpLimiter/pkg"
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -49,6 +49,6 @@ func (s *Server) Run() {
 	s.registerRoutes()
 
 	Addr := ":" + s.Config.Port
-	fmt.Printf("%s listening... \n", Addr)
+	logrus.Infof("%s listening...", Addr)
 	s.Engine.Run(Addr)
 }

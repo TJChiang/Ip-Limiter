@@ -2,8 +2,8 @@ package internal
 
 import (
 	"IpLimiter/pkg"
-	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 )
@@ -37,7 +37,7 @@ func (m *RateLimiterMiddleware) handle() gin.HandlerFunc {
 
 		if remaining == 0 {
 			c.AbortWithStatus(http.StatusTooManyRequests)
-			fmt.Printf("Attempt too many times: %s \n", ip)
+			logrus.Errorf("Attempt too many times: %s", ip)
 			return
 		}
 
