@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -22,8 +23,10 @@ func NewRedisConfig() (*RedisConfig, error) {
 		return nil, err
 	}
 
+	addr := GetEnvValue("REDIS_HOST", "localhost") + ":" + GetEnvValue("REDIS_PORT", "6379")
+	fmt.Println(addr)
 	return &RedisConfig{
-		Addr:       GetEnvValue("REDIS_ADDR", "localhost:6379"),
+		Addr:       addr,
 		Password:   GetEnvValue("REDIS_PASSWORD", ""),
 		DB:         db,
 		MaxRetries: retires,

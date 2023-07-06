@@ -1,7 +1,7 @@
 package main
 
 import (
-	"IpLimiter/cmd/internal"
+	"IpLimiter/internal"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"os"

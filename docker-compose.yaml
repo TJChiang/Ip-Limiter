@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      TZ: Asia/Taipei
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "${APP_PORT}:8088"
+    working_dir: /app
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    entrypoint: go run main.go
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - "${REDIS_PORT}:6379"
+    healthcheck:
+      test: redis-cli ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
